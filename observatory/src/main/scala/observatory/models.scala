@@ -40,3 +40,10 @@ case class CellPoint(x: Double, y: Double)
   */
 case class Color(red: Int, green: Int, blue: Int)
 
+/**
+  * Represents Station identifier
+  * @param stn first station's id
+  * @param wban second station's id
+  */
+case class StationIdentifier(stn: Option[Int], wban: Option[Int])
+

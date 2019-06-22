@@ -2,6 +2,10 @@ package observatory
 
 import java.time.LocalDate
 
+import scala.io.Source
+
+import observatory.util.OptionUtils._
+
 /**
   * 1st milestone: data extraction
   */
@@ -23,6 +27,16 @@ object Extraction {
     */
   def locationYearlyAverageRecords(records: Iterable[(LocalDate, Location, Temperature)]): Iterable[(Location, Temperature)] = {
     ???
+  }
+
+  def parseStationsStream(stationsFile: String): Map[StationIdentifier, Location] = {
+    val lineStream = Source.fromInputStream(getClass.getResourceAsStream(stationsFile)).getLines
+    val stationsDataStream = lineStream.map((str: String) => str.split(",")).map {
+      case Array(stn, wban, lat, lon) => Some(
+        StationIdentifier(optInt(stn), optInt(wban)) -> Location(lat.toDouble, lon.toDouble))
+      case _ => None
+    }
+    stationsDataStream.flatten.toMap
   }
 
 }
