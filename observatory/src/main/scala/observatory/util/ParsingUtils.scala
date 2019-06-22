@@ -1,6 +1,5 @@
 package observatory.util
 
-import observatory.Extraction.parseStationId
 import observatory.{Location, StationId, StationTemperature}
 
 import scala.io.Source
@@ -8,11 +7,21 @@ import scala.util.{Failure, Try}
 
 object ParsingUtils {
 
+  /**
+    * Parse entire stations file
+    * @param stationsFile path to the stations file
+    * @return a map of StationId object and Location object
+    */
   def parseStationsFile(stationsFile: String): Map[StationId, Location] = {
     val lineStream = Source.fromInputStream(getClass.getResourceAsStream(stationsFile)).getLines
     lineStream.flatMap(parseStationFromStr).toMap
   }
 
+  /**
+    * Parse entire temperatures file
+    * @param temperaturesFile path to the stations file
+    * @return a sequence containing StationTemperature objects
+    */
   def parseTemperaturesFile(temperaturesFile: String) : Iterable[StationTemperature] = {
     val lineStream = Source.fromInputStream(getClass.getResourceAsStream(temperaturesFile)).getLines
     lineStream.flatMap(parseStationTemperatureFromStr).toIterable
@@ -49,5 +58,16 @@ object ParsingUtils {
     }
     tryRecord.toOption
   }
+
+  /**
+    * Any invalid input results in the id component of type None
+    * @param stnStr STN number as string or the empty string
+    * @param wbanStr WBAN number as string or the empty string
+    * @return StationId
+    */
+  def parseStationId(stnStr: String, wbanStr: String) = StationId(
+    Try(stnStr.toInt).toOption,
+    Try(wbanStr.toInt).toOption
+  )
 
 }
