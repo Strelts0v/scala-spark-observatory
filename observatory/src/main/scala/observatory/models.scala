@@ -41,9 +41,17 @@ case class CellPoint(x: Double, y: Double)
 case class Color(red: Int, green: Int, blue: Int)
 
 /**
-  * Represents Station identifier
+  * Represents Station id
   * @param stn first station's id
   * @param wban second station's id
   */
-case class StationIdentifier(stn: Option[Int], wban: Option[Int])
+case class StationId(stn: Option[Int], wban: Option[Int])
 
+/**
+  * Represents Station temperature information
+  * @param id station's id
+  * @param month month of the temperature
+  * @param day day of the temperature
+  * @param temp temperature
+  */
+case class StationTemperature(id: StationId, month: Int, day: Int, temp: Double)
