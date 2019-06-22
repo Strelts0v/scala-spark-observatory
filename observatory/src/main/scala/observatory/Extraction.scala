@@ -2,9 +2,10 @@ package observatory
 
 import java.time.LocalDate
 
-import scala.io.Source
+import observatory.util.TemperatureConversionUtils._
+import observatory.util.ParsingUtils._
 
-import observatory.util.OptionUtils._
+import scala.util.Try
 
 /**
   * 1st milestone: data extraction
@@ -17,26 +18,27 @@ object Extraction {
     * @param temperaturesFile Path of the temperatures resource file to use (e.g. "/1975.csv")
     * @return A sequence containing triplets (date, location, temperature)
     */
-  def locateTemperatures(year: Year, stationsFile: String, temperaturesFile: String): Iterable[(LocalDate, Location, Temperature)] = {
-    ???
+  def locateTemperatures(year: Year, stationsFile: String, temperaturesFile: String)
+    : Iterable[(LocalDate, Location, Temperature)] = {
+
+    val stationsMap = parseStationsFile(stationsFile)
+    parseTemperaturesFile(temperaturesFile).flatMap(toLocatedTemperature(year, stationsMap))
+  }
+
+  def toLocatedTemperature(year: Int, stationsMap: Map[StationId, Location])(t: StationTemperature)
+    : Option[(LocalDate, Location, Double)] = {
+
+    Try(
+      (
+        LocalDate.of(year, t.month, t.day),
+        stationsMap(t.id), fahrenheitToCelsius(t.temp)
+      )
+    ).toOption
   }
 
   /**
     * @param records A sequence containing triplets (date, location, temperature)
     * @return A sequence containing, for each location, the average temperature over the year.
     */
-  def locationYearlyAverageRecords(records: Iterable[(LocalDate, Location, Temperature)]): Iterable[(Location, Temperature)] = {
-    ???
-  }
-
-  def parseStationsStream(stationsFile: String): Map[StationIdentifier, Location] = {
-    val lineStream = Source.fromInputStream(getClass.getResourceAsStream(stationsFile)).getLines
-    val stationsDataStream = lineStream.map((str: String) => str.split(",")).map {
-      case Array(stn, wban, lat, lon) => Some(
-        StationIdentifier(optInt(stn), optInt(wban)) -> Location(lat.toDouble, lon.toDouble))
-      case _ => None
-    }
-    stationsDataStream.flatten.toMap
-  }
-
+  def locationYearlyAverageRecords(records: Iterable[(LocalDate, Location, Temperature)]): Iterable[(Location, Temperature)] = ???
 }
