@@ -13,9 +13,9 @@ import scala.util.Try
 object Extraction {
 
   /**
-    * @param year             Year number
-    * @param stationsFile     Path of the stations resource file to use (e.g. "/stations.csv")
-    * @param temperaturesFile Path of the temperatures resource file to use (e.g. "/1975.csv")
+    * @param year year number
+    * @param stationsFile path of the stations resource file to use (e.g. "/stations.csv")
+    * @param temperaturesFile path of the temperatures resource file to use (e.g. "/1975.csv")
     * @return A sequence containing triplets (date, location, temperature)
     */
   def locateTemperatures(year: Year, stationsFile: String, temperaturesFile: String)
