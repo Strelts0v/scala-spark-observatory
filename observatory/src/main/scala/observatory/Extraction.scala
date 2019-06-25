@@ -40,5 +40,18 @@ object Extraction {
     * @param records A sequence containing triplets (date, location, temperature)
     * @return A sequence containing, for each location, the average temperature over the year.
     */
-  def locationYearlyAverageRecords(records: Iterable[(LocalDate, Location, Temperature)]): Iterable[(Location, Temperature)] = ???
+  def locationYearlyAverageRecords(records: Iterable[(LocalDate, Location, Temperature)])
+    : Iterable[(Location, Temperature)] = {
+
+    case class Avg(count: Int, totalTemp: Double)
+
+    val resultMap = records.foldLeft[Map[Location, Avg]](Map.empty) { (avg, record) =>
+      record match {
+        case (date, location, temperature) =>
+          val data = avg.getOrElse(location, Avg(0, 0.0))
+          avg.updated(location, Avg(data.count + 1, data.totalTemp + temperature))
+      }
+    }
+    resultMap.mapValues(a => a.totalTemp / a.count)
+  }
 }
