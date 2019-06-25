@@ -7,7 +7,7 @@ import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
 
-import observatory.data.testLocations._
+import observatory.data.testVisualizationData._
 
 @RunWith(classOf[JUnitRunner])
 class InterpolationCalculationsTest extends FunSuite with GeneratorDrivenPropertyChecks {
@@ -20,7 +20,7 @@ class InterpolationCalculationsTest extends FunSuite with GeneratorDrivenPropert
   }
 
   test("Check commutativity law with random generated locations") {
-    forAll (locationGen, locationGen) { (l1: Location, l2: Location) =>
+    forAll (locationSample, locationSample) { (l1: Location, l2: Location) =>
       assert(InterpolationCalculations.greatCircleDistance(l1, l2) === InterpolationCalculations.greatCircleDistance(l2, l1))
     }
   }
