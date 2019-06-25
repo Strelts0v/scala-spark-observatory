@@ -2,6 +2,9 @@ package observatory
 
 import com.sksamuel.scrimage.{Image, Pixel}
 
+import observatory.calculation.InterpolationCalculations._
+import observatory.constant.CalculationConstants._
+
 /**
   * 2nd milestone: basic visualization
   */
@@ -13,7 +16,7 @@ object Visualization {
     * @return The predicted temperature at `location`
     */
   def predictTemperature(temperatures: Iterable[(Location, Temperature)], location: Location): Temperature = {
-    ???
+    inverseDistanceWeighting(temperatures, location, inverseDistanceWeightingPower)
   }
 
   /**
