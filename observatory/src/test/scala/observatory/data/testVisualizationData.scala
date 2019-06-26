@@ -9,19 +9,23 @@ object testVisualizationData {
   val parisLocation = Location(48.864716, 2.349014)
   val londonLocation = Location(51.508530, -0.076132)
 
-  val locationSample = for {
+  val locationGen = for {
     lat <- Gen.choose(-90.0, 90.0)
     lon <- Gen.choose(-180.0, 180.0)
   } yield Location(lat, lon)
 
-  val colourSample = for {
+  val colourGen = for {
     red <- Gen.choose(0, 255)
     green <- Gen.choose(0, 255)
     blue <- Gen.choose(0, 255)
   } yield Color(red, green, blue)
 
-  val visualizationSample = for {
-    loc <- locationSample
-    value <- Gen.choose(-50.0, 50.0)
-  } yield (loc, value)
+  val sampleGen = {
+    val gen = for {
+      loc <- locationGen
+      value <- Gen.choose(-50.0, 50.0)
+    } yield (loc, value)
+
+    Gen.listOfN(10, gen)
+  }
 }
