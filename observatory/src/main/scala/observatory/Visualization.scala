@@ -1,7 +1,6 @@
 package observatory
 
 import com.sksamuel.scrimage.{Image, Pixel}
-
 import observatory.calculation.InterpolationCalculations._
 import observatory.constant.CalculationConstants._
 
@@ -55,7 +54,22 @@ object Visualization {
     * @return A 360×180 image where each pixel shows the predicted temperature at its location
     */
   def visualize(temperatures: Iterable[(Location, Temperature)], colors: Iterable[(Temperature, Color)]): Image = {
-    ???
+    val sortedColours = colors.toList.sortWith(_._1 < _._1).toArray
+
+    val buffer = new Array[Pixel](360 * 180)
+
+    for (y <- 0 until 180) {
+      for (x <- 0 until 360) {
+        val temp = inverseDistanceWeighting(temperatures, Location(90-y, x-180), inverseDistanceWeightingPower)
+        buffer(y*360 + x) = colorToPixel(interpolateColorAlgo(sortedColours, temp))
+      }
+    }
+
+    Image.apply(360, 180, buffer)
+  }
+
+  def colorToPixel(c: Color): Pixel = {
+    Pixel.apply(c.red, c.green, c.blue, 255)
   }
 
 }
