@@ -5,14 +5,12 @@ import observatory.Location
 import org.junit.runner.RunWith
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
-import org.scalatest.prop.GeneratorDrivenPropertyChecks
+import org.scalatest.prop.Checkers
 import org.scalacheck.Prop._
-
 import observatory.data.testVisualizationData._
 
-
 @RunWith(classOf[JUnitRunner])
-class InterpolationCalculationsTest extends FunSuite with GeneratorDrivenPropertyChecks {
+class InterpolationCalculationsTest extends FunSuite with Checkers {
 
   test("Check commutativity law with London and Paris locations") {
     assert(
@@ -22,9 +20,9 @@ class InterpolationCalculationsTest extends FunSuite with GeneratorDrivenPropert
   }
 
   test("Check commutativity law with random generated locations") {
-    forAll (locationGen, locationGen) { (l1: Location, l2: Location) =>
-      assert(InterpolationCalculations.greatCircleDistance(l1, l2) === InterpolationCalculations.greatCircleDistance(l2, l1))
-    }
+    check(forAll (locationGen, locationGen) { (l1: Location, l2: Location) =>
+      InterpolationCalculations.greatCircleDistance(l1, l2) === InterpolationCalculations.greatCircleDistance(l2, l1)
+    })
   }
 
   test("Check calculation of Great Circle Distance for London and New York locations") {
