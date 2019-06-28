@@ -21,15 +21,15 @@ trait Visualizer {
   def xyToLocation(x: Int, y: Int): Location
 
   def visualize(temperatures: Iterable[(Location, Double)]): Future[Image] = {
-    val tasks = for {y <- 0 until height} yield Future {
-      val rowBuffer = new Array[Pixel](width)
-      for (x <- 0 until width) {
-        val temp = inverseDistanceWeighting(temperatures, xyToLocation(x, y), inverseDistanceWeightingPower)
-        rowBuffer(x) = colorToPixel(Visualization.interpolateColor(colorMap, temp))
+    Future {
+      val buffer = new Array[Pixel](width * height)
+      for (y <- 0 until height) {
+        for (x <- 0 until width) {
+          val temp = inverseDistanceWeighting(temperatures, xyToLocation(x, y), inverseDistanceWeightingPower)
+          buffer(y * width + x) = colorToPixel(Visualization.interpolateColor(colorMap, temp))
+        }
       }
-      rowBuffer
+      Image(width, height, buffer)
     }
-
-    Future.sequence(tasks).map(seq => Image(width, height, seq.reduce(_ ++ _)))
   }
 }
