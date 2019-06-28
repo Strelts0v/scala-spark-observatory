@@ -1,8 +1,11 @@
 package observatory
 
 import com.sksamuel.scrimage.{Image, Pixel}
+import observatory.visualization.TileVisualizer
 
+import scala.concurrent.Await
 import scala.math.{Pi, atan, pow, sinh}
+import scala.concurrent.duration._
 
 /**
   * 3rd milestone: interactive visualization
@@ -15,7 +18,7 @@ object Interaction {
     */
   def tileLocation(tile: Tile): Location = {
     val n = pow(2.0, tile.zoom)
-    val lon = tile.x / (n * 260.0 - 180.0)
+    val lon = (tile.x.toDouble / n) * 360.0 - 180.0
     val lat = atan(sinh(Pi * (1.0 - 2.0 * tile.y / n))).toDegrees
 
     Location(lat, lon)
@@ -28,7 +31,8 @@ object Interaction {
     * @return A 256×256 image showing the contents of the given tile
     */
   def tile(temperatures: Iterable[(Location, Temperature)], colors: Iterable[(Temperature, Color)], tile: Tile): Image = {
-    ???
+    val visualizer = new TileVisualizer(colors, tile)
+    Await.result(visualizer.visualize(temperatures), 20.minutes)
   }
 
   /**
@@ -42,7 +46,13 @@ object Interaction {
     yearlyData: Iterable[(Year, Data)],
     generateImage: (Year, Tile, Data) => Unit
   ): Unit = {
-    ???
+    for {
+      (year, data) <- yearlyData
+      zoom <- 0 until 3
+      y <- 0 until pow(2.0, zoom).toInt
+      x <- 0 until pow(2.0, zoom).toInt
+    } yield generateImage(year, Tile(x, y, zoom), data)
+    ()
   }
 
 }
