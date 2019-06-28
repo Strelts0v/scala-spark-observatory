@@ -1,31 +1,13 @@
 package observatory
 
 import observatory.Extraction.{locateTemperatures, locationYearlyAverageRecords}
-import observatory.util.ParsingUtils
-import org.apache.log4j.{Level, Logger}
 
 object Main extends App {
 
-//  Logger.getLogger("org.apache.spark").setLevel(Level.WARN)
-//
-//  val firstYear = 1975
-//  val lastYear = 2016
-//
-//  println("Loading stations...")
-//  val stations = ParsingUtils.parseStationsFile("/stations.csv")
-//  println("Loading of stations has been accomplished!")
-//  println(s"Stations total size: ${stations.size}")
-//  val temperatures = (firstYear until lastYear) map { year => {
-//    println(s"Loading file with temperatures for year: $year")
-//    (year, ParsingUtils.parseTemperaturesFile(s"/$year.csv"))
-//  }}
-//
-//  println(s"Temperatures total size: ${temperatures.length}")
+  val firstYear = 1975
+  val lastYear = 2016
 
-  val FIRST_YEAR = 1975
-  val LAST_YEAR = 2015
-
-  val colours: List[(Double, Color)] = List(
+  val colors: List[(Double, Color)] = List(
     (60.0, Color(255, 255, 255)),
     (32.0, Color(255, 0, 0)),
     (12.0, Color(255, 255, 0)),
@@ -36,23 +18,28 @@ object Main extends App {
     (-60.0, Color(0, 0, 0))
   )
 
-  // println("Loading stations")
-  // val stations = Extraction.parseStationsFile("/stations.csv")
-  // println("Loading done")
-  // println(stations.size)
+  def doWeek1(): Unit = {
+    val temperatures: Map[Int, Iterable[(Location, Double)]] = {
+      for {
+        year <- firstYear until lastYear
+      } yield (year, locationYearlyAverageRecords(locateTemperatures(year, "/stations.csv", s"/$year.csv")))
+    }.toMap
+  }
 
-  // TODO Convert temps and stations data to yearly data
-  /*
-  val temps: Map[Int, Iterable[(Location, Double)]] = {
-    for {
-      year <- FIRST_YEAR until LAST_YEAR
-      println(s"Loading year $year")
-    } yield (year, locationYearlyAverageRecords(locateTemperatures(year, "/stations.csv", s"/$year.csv")))
-  }.toMap
-  */
+  def doWeek2(): Unit = {
+    val temperatures = locationYearlyAverageRecords(locateTemperatures(1975, "/stations.csv", "/1975.csv"))
+    val image = Visualization.visualize(temperatures, colors)
+    image.output("./map_1975.png")
+  }
 
-  val temps1975 = locationYearlyAverageRecords(locateTemperatures(1975, "/stations.csv", "/1975.csv"))
-  val image = Visualization.visualize(temps1975, colours)
-  image.output("./map_1975.png")
+  def doWeek3(): Unit = {
+    val temperatures = locationYearlyAverageRecords(locateTemperatures(1975, "/stations.csv", "/1975.csv"))
+
+    println("tile1")
+    val tile = Interaction.tile(temperatures, colors, Tile(0, 0, 1))
+    tile.output("./tile1.png")
+  }
+
+  doWeek3()
 
 }
