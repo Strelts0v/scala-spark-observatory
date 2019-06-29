@@ -1,5 +1,7 @@
 package observatory
 
+import java.io.File
+
 import observatory.Extraction.{locateTemperatures, locationYearlyAverageRecords}
 
 object Main extends App {
@@ -33,11 +35,27 @@ object Main extends App {
   }
 
   def doWeek3(): Unit = {
-    val temperatures = locationYearlyAverageRecords(locateTemperatures(1975, "/stations.csv", "/1975.csv"))
+    val temps = locationYearlyAverageRecords(locateTemperatures(2015, "/stations.csv", "/1975.csv"))
 
-    println("tile1")
-    val tile = Interaction.tile(temperatures, colors, Tile(0, 0, 1))
-    tile.output("./tile1.png")
+    def generateTile(year: Int, tile: Tile, data: Iterable[(Location, Double)]): Unit = {
+      val tileDir = new File(s"./target/temperatures/2015/${tile.zoom}")
+      tileDir.mkdirs()
+      val tileFile = new File(tileDir, s"${tile.x}-${tile.y}.png")
+
+      if (tileFile.exists ){
+        println(s"Tile ${tile.zoom}:${tile.x}:y already exists")
+      }
+      else {
+        println(s"Generating tile ${tile.zoom}:${tile.x}:${tile.y} for $year")
+        val image = Interaction.tile(data, colors, Tile(tile.x, tile.y, tile.zoom))
+        println(s"Done tile ${tile.zoom}:${tile.x}:${tile.y} for $year")
+        image.output(tileFile)
+      }
+
+      ()
+    }
+
+    Interaction.generateTiles(List((1975, temps)), generateTile)
   }
 
   doWeek3()
