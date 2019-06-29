@@ -11,7 +11,8 @@ object Manipulation {
     *         returns the predicted temperature at this location
     */
   def makeGrid(temperatures: Iterable[(Location, Temperature)]): GridLocation => Temperature = {
-    ???
+    val grid = new Grid(360, 180, temperatures)
+    grid.asFunction()
   }
 
   /**
@@ -20,7 +21,28 @@ object Manipulation {
     * @return A function that, given a latitude and a longitude, returns the average temperature at this location
     */
   def average(temperaturess: Iterable[Iterable[(Location, Temperature)]]): GridLocation => Temperature = {
-    ???
+    // Generate a grid for each year
+    val gridPairs: Iterable[(Array[Double], Int)] = for {
+      temps <- temperaturess
+    } yield (new Grid(360, 180, temps).asArray(), 1)
+
+    val reduced = gridPairs.reduce { (p1: (Array[Double], Int), p2: (Array[Double], Int)) => {
+      (p1, p2) match {
+        case ((g1, c1), (g2, c2)) => {
+          val g3 = new Array[Double](g1.length)
+          for (i <- 0 until g1.length) {
+            g3(i) = g1(i) + g2(i)
+          }
+          (g3, c1 + c2)
+        }
+      }
+    }}
+
+    val meanGrid = reduced match {
+      case (grid, count) => grid.map(_ / count)
+    }
+
+    new Grid(360, 180, meanGrid).asFunction()
   }
 
   /**
@@ -29,7 +51,10 @@ object Manipulation {
     * @return A grid containing the deviations compared to the normal temperatures
     */
   def deviation(temperatures: Iterable[(Location, Temperature)], normals: GridLocation => Temperature): GridLocation => Temperature = {
-    ???
+    val grid = makeGrid(temperatures)
+    (x: Int, y: Int) => {
+      grid(x, y) - normals(x, y)
+    }
   }
 
 
