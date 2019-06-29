@@ -1,11 +1,13 @@
 package observatory
 
-import com.sksamuel.scrimage.{Image, Pixel}
+import com.sksamuel.scrimage.Image
 import observatory.visualization.TileVisualizer
 
-import scala.concurrent.Await
 import scala.math.{Pi, atan, pow, sinh}
+
+import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
   * 3rd milestone: interactive visualization
@@ -32,7 +34,7 @@ object Interaction {
     */
   def tile(temperatures: Iterable[(Location, Temperature)], colors: Iterable[(Temperature, Color)], tile: Tile): Image = {
     val visualizer = new TileVisualizer(colors, tile)
-    Await.result(visualizer.visualize(temperatures), 20.minutes)
+    visualizer.visualize(temperatures)
   }
 
   /**
@@ -46,12 +48,14 @@ object Interaction {
     yearlyData: Iterable[(Year, Data)],
     generateImage: (Year, Tile, Data) => Unit
   ): Unit = {
-    for {
+    val tileTasks = for {
       (year, data) <- yearlyData
-      zoom <- 0 until 3
+      zoom <- 0 until 4
       y <- 0 until pow(2.0, zoom).toInt
       x <- 0 until pow(2.0, zoom).toInt
-    } yield generateImage(year, Tile(x, y, zoom), data)
+    } yield Future { generateImage(year, Tile(x, y, zoom), data) }
+
+    Await.result(Future.sequence(tileTasks), Duration.Inf)
     ()
   }
 
