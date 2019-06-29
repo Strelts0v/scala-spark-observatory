@@ -1,12 +1,9 @@
 package observatory
 
-import com.sksamuel.scrimage.{Image, Pixel}
+import com.sksamuel.scrimage.Image
 import observatory.calculation.InterpolationCalculations._
 import observatory.constant.CalculationConstants._
 import observatory.visualization.BasicVisualizer
-
-import scala.concurrent.Await
-import scala.concurrent.duration._
 
 /**
   * 2nd milestone: basic visualization
@@ -60,7 +57,7 @@ object Visualization {
     */
   def visualize(temperatures: Iterable[(Location, Temperature)], colors: Iterable[(Temperature, Color)]): Image = {
     val visualizer = new BasicVisualizer(colors)
-    Await.result(visualizer.visualize(temperatures), 20.minutes)
+    visualizer.visualize(temperatures)
   }
 
 }
