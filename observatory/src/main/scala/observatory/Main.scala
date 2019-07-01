@@ -3,6 +3,13 @@ package observatory
 import java.io.File
 
 import observatory.Extraction.{locateTemperatures, locationYearlyAverageRecords}
+import observatory.Manipulation.averageGridRDD
+import observatory.grid.Grid
+import org.apache.spark.SparkConf
+import org.apache.spark.SparkContext
+import org.apache.spark.SparkContext._
+import org.apache.spark.rdd.RDD
+
 
 object Main extends App {
 
@@ -58,6 +65,25 @@ object Main extends App {
     Interaction.generateTiles(List((1975, temps)), generateTile)
   }
 
-  doWeek3()
+  def main(): Unit = {
+    // Setup Spark environment
+    val conf: SparkConf = new SparkConf().setAppName("Scala-Capstone")
+    val sc: SparkContext = new SparkContext(conf)
+
+    // Load data into RDDs
+    val years: RDD[Int] = sc.parallelize(1975 until 2016)
+    val temps: RDD[(Int, Iterable[(Location, Double)])] = years.map( (year: Int) => {
+      (year, locationYearlyAverageRecords(locateTemperatures(year, "/stations.csv", s"/${year}.csv")))
+    })
+//    val grids: RDD[(Int, Grid)] = temps.map(
+//      (year: Int, temps: Iterable[(Location, Double)]) => new Grid(360, 180, temps)
+//    )
+
+    // Calculate normals from 1975-1989
+//    val normalGrid: Grid = averageGridRDD(grids.filter(_._1 < 1990).map(_._2))
+    // TODO : Calculate anomalies for 1990-2015
+
+    // TODO : Create tiles
+  }
 
 }

@@ -1,11 +1,12 @@
 package observatory
 
+import java.util.concurrent.Executors
+
 import com.sksamuel.scrimage.Image
 import observatory.visualization.TileVisualizer
 
 import scala.math.{Pi, atan, pow, sinh}
-
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -13,6 +14,10 @@ import scala.concurrent.ExecutionContext.Implicits.global
   * 3rd milestone: interactive visualization
   */
 object Interaction {
+
+  // TODO : Make number of threads configurable
+  // Configure a limit on the number of threads to use
+  implicit val ec = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(10))
 
   /**
     * @param tile Tile coordinates
