@@ -2,6 +2,9 @@ package observatory
 
 import java.time.LocalDate
 
+import observatory.resource.ResourceDataSource
+
+import scala.io.Source
 import observatory.util.TemperatureConversionUtils._
 import observatory.util.ParsingUtils._
 
@@ -12,6 +15,8 @@ import scala.util.Try
   */
 object Extraction {
 
+  val dataFileSource = new ResourceDataSource()
+
   /**
     * @param year year number
     * @param stationsFile path of the stations resource file to use (e.g. "/stations.csv")
@@ -21,8 +26,8 @@ object Extraction {
   def locateTemperatures(year: Year, stationsFile: String, temperaturesFile: String)
     : Iterable[(LocalDate, Location, Temperature)] = {
 
-    val stationsMap = parseStationsFile(stationsFile)
-    parseTemperaturesFile(temperaturesFile).flatMap(toLocatedTemperature(year, stationsMap))
+    val stationsMap = dataFileSource.parseStationsFile(stationsFile)
+    dataFileSource.parseTemperatureFile(temperaturesFile).flatMap(toLocatedTemperature(year, stationsMap))
   }
 
   def toLocatedTemperature(year: Int, stationsMap: Map[StationId, Location])(t: StationTemperature)
