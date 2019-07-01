@@ -1,6 +1,6 @@
 package observatory.grid
 
-import observatory.Location
+import observatory.{GridLocation, Location}
 import observatory.calculation.InterpolationCalculations._
 import observatory.constant.CalculationConstants._
 
@@ -18,10 +18,10 @@ class Grid(width: Int, height: Int, buffer: Array[Double]) {
 
   def xyToLocation(x: Int, y: Int): Location = Location((height / 2) - y, x - (width / 2))
 
-  def asFunction(): (Int, Int) => Double = {
-    (lat: Int, lon: Int) => {
-      val x = lon + 180
-      val y = 90 - lat
+  def asFunction(): GridLocation => Double = {
+    gridLocation => {
+      val x = gridLocation.lon + 180
+      val y = 90 - gridLocation.lat
       buffer(y * width + x)
     }
   }
