@@ -67,15 +67,15 @@ object Manipulation {
   /**
     * Spark implementation of the averaging function
     */
-  def averageGridRDD(temperatures: RDD[Grid]): Grid = {
-    val reduced: (Array[Double], Int) = temperatures.reduce(
-      (g1: Grid, g2: Grid) => mergeArrayPairs((g1.asArray(), 1), (g2.asArray(), 1))
-    )
-    val meanArray = reduced match {
-      case (grid, count) => grid.map(_ / count)
-    }
-    new Grid(360, 180, meanArray)
-  }
+//  def averageGridRDD(temperatures: RDD[Grid]): Grid = {
+//    val reduced: (Array[Double], Int) = temperatures.reduce(
+//      (g1: Grid, g2: Grid) => mergeArrayPairs((g1.asArray(), 1), (g2.asArray(), 1))
+//    )
+//    val meanArray = reduced match {
+//      case (grid, count) => grid.map(_ / count)
+//    }
+//    new Grid(360, 180, meanArray)
+//  }
 
 }
 

@@ -1,7 +1,5 @@
 package observatory.resource
 
-import observatory.InputDataSource
-
 import scala.io.Source
 
 class ResourceDataSource extends InputDataSource {

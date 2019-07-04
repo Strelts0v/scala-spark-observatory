@@ -6,9 +6,9 @@ import com.sksamuel.scrimage.Image
 import observatory.visualization.TileVisualizer
 
 import scala.math.{Pi, atan, pow, sinh}
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{Await, Future, ExecutionContext}
 import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext.Implicits.global
+import java.util.concurrent.Executors
 
 /**
   * 3rd milestone: interactive visualization

@@ -16,6 +16,6 @@ class TileVisualizer(colors: Iterable[(Double, Color)], tile: Tile) extends Visu
   val y0: Int = pow(2.0, 8).toInt * tile.y
 
   def xyToLocation(x: Int, y: Int): Location = {
-    tileLocation(Tile(tile.zoom + 8, x0 + x, y0 + y))
+    tileLocation(Tile(x0 + x, y0 + y, tile.zoom + 8))
   }
 }
