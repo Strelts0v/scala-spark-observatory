@@ -1,3 +1,4 @@
+
 name := course.value ++ "-" ++ assignment.value
 
 scalaVersion := "2.11.8"
@@ -35,4 +36,4 @@ courseId := "PCO2sYdDEeW0iQ6RUMSWEQ"
 
 parallelExecution in Test := false // So that tests are executed for each milestone, one after the other
 
-mainClass in assembly := Some("observatory.Main")
+packAutoSettings

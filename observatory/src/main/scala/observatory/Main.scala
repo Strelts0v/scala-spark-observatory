@@ -2,13 +2,12 @@ package observatory
 
 import java.io.File
 
-import observatory.Extraction.{locateTemperatures, locationYearlyAverageRecords}
-import observatory.grid.Grid
 import org.apache.spark.SparkConf
 import org.apache.spark.SparkContext
-import org.apache.spark.SparkContext._
 import org.apache.spark.rdd.RDD
-
+import Extraction._
+import observatory.grid.Grid
+import Manipulation._
 
 object Main extends App {
 
@@ -26,6 +25,15 @@ object Main extends App {
     (-60.0, Color(0, 0, 0))
   )
 
+  val anomalyColors: List[(Double, Color)] = List(
+    (7.0, Color(0, 0, 0)),
+    (4.0, Color(255, 0, 0)),
+    (2.0, Color(255, 255, 0)),
+    (0.0, Color(255, 255, 255)),
+    (-2.0, Color(0, 255, 255)),
+    (-7.0, Color(0, 0, 255))
+  )
+
   def doWeek1(): Unit = {
     val temperatures: Map[Int, Iterable[(Location, Double)]] = {
       for {
@@ -38,6 +46,8 @@ object Main extends App {
     val temperatures = locationYearlyAverageRecords(locateTemperatures(1975, "/stations.csv", "/1975.csv"))
     val image = Visualization.visualize(temperatures, colors)
     image.output("./map_1975.png")
+
+    ()
   }
 
   def doWeek3(): Unit = {
@@ -64,27 +74,35 @@ object Main extends App {
     Interaction.generateTiles(List((1975, temps)), generateTile)
   }
 
-  doWeek3()
 
-  def main(): Unit = {
-//    // Setup Spark environment
-//    val conf: SparkConf = new SparkConf().setAppName("Scala-Capstone")
-//    val sc: SparkContext = new SparkContext(conf)
-//
-//    // Load data into RDDs
-//    val years: RDD[Int] = sc.parallelize(1975 until 2016)
-//    val temps: RDD[(Int, Iterable[(Location, Double)])] = years.map( (year: Int) => {
-//      (year, locationYearlyAverageRecords(locateTemperatures(year, "/stations.csv", s"/${year}.csv")))
-//    })
-////    val grids: RDD[(Int, Grid)] = temps.map(
-////      (year: Int, temps: Iterable[(Location, Double)]) => new Grid(360, 180, temps)
-////    )
-//
-//    // Calculate normals from 1975-1989
-////    val normalGrid: Grid = averageGridRDD(grids.filter(_._1 < 1990).map(_._2))
-//    // TODO : Calculate anomalies for 1990-2015
-//
-//    // TODO : Create tiles
+  // Note: The climatalogical term for what the course descrives as temperature deviations is "anomalies"
+  def doWeek5(): Unit = {
+
+    // Setup Spark environment
+    val conf: SparkConf = new SparkConf()
+      .setAppName("Observatory")
+      .setMaster("local[3]")
+      .set("spark.executor.memory", "3g")
+
+    val sc: SparkContext = new SparkContext(conf)
+
+    // Load data into RDDs
+    val years: RDD[Int] = sc.parallelize(1975 until 2016)
+    val temps: RDD[(Int, Iterable[(Location, Double)])] = years.map( (year: Int) => {
+      (year, locationYearlyAverageRecords(locateTemperatures(year, "/stations.csv", s"/${year}.csv")))
+    })
+    val grids: RDD[(Int, Grid)] = temps.map({
+      case (year: Int, temps: Iterable[(Location, Double)]) => (year, new Grid(360, 180, temps))
+    })
+
+    // Calculate normals from 1975-1989
+    val normalGrid: Grid = averageGridRDD(grids.filter(_._1 < 1990).map(_._2))
+    // TODO : Calculate anomalies for 1990-2015
+
+    // TODO : Create tiles
   }
 
+  doWeek5()
+
 }
+

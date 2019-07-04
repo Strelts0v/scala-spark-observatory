@@ -3,10 +3,7 @@ package observatory
 import java.time.LocalDate
 
 import observatory.resource.ResourceDataSource
-
-import scala.io.Source
 import observatory.util.TemperatureConversionUtils._
-import observatory.util.ParsingUtils._
 
 import scala.util.Try
 
