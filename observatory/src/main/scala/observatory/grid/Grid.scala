@@ -1,20 +1,11 @@
 package observatory.grid
 
 import observatory.{GridLocation, Location}
-import observatory.calculation.InterpolationCalculations._
-import observatory.constant.CalculationConstants._
 
-class Grid(width: Int, height: Int, buffer: Array[Double]) {
-
-  def this(width: Int, height: Int, temperatures: Iterable[(Location, Double)]) {
-    this(width, height, new Array[Double](width * height))
-
-    for (y <- 0 until height) {
-      for (x <- 0 until width) {
-        buffer(y * width + x) = inverseDistanceWeighting(temperatures, xyToLocation(x, y), inverseDistanceWeightingPower)
-      }
-    }
-  }
+class Grid extends Serializable {
+  val width = 360
+  val height = 180
+  val buffer: Array[Double] = new Array[Double](width * height)
 
   def xyToLocation(x: Int, y: Int): Location = Location((height / 2) - y, x - (width / 2))
 
@@ -27,4 +18,28 @@ class Grid(width: Int, height: Int, buffer: Array[Double]) {
   }
 
   def asArray(): Array[Double] = buffer
+
+  def add(grid: Grid): Grid = {
+    val newGrid = new Grid()
+    for (i <- 0 until width * height) { newGrid.buffer(i) = this.buffer(i) + grid.buffer(i)}
+    newGrid
+  }
+
+  def diff(grid: Grid): Grid = {
+    val newGrid = new Grid()
+    for (i <- 0 until width * height) { newGrid.buffer(i) = this.buffer(i) + grid.buffer(i)}
+    newGrid
+  }
+
+  def scale(factor: Double): Grid = {
+    val newGrid = new Grid()
+    for (i <- 0 until width * height) { newGrid.buffer(i) = this.buffer(i) * factor }
+    newGrid
+  }
+
+  def map(f: Double => Double): Grid = {
+    val newGrid = new Grid()
+    for (i <- 0 until width * height) { newGrid.buffer(i) = f(this.buffer(i)) }
+    newGrid
+  }
 }
