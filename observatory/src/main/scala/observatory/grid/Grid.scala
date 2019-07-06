@@ -27,7 +27,7 @@ class Grid extends Serializable {
 
   def diff(grid: Grid): Grid = {
     val newGrid = new Grid()
-    for (i <- 0 until width * height) { newGrid.buffer(i) = this.buffer(i) + grid.buffer(i)}
+    for (i <- 0 until width * height) { newGrid.buffer(i) = this.buffer(i) - grid.buffer(i)}
     newGrid
   }
 

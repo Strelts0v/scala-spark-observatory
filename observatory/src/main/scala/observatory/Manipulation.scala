@@ -1,7 +1,12 @@
 package observatory
 
+import java.io.File
+
+import com.sksamuel.scrimage.Image
 import observatory.grid.{Grid, GridBuilder}
 import org.apache.spark.rdd.RDD
+
+import scala.math.pow
 
 /**
   * 4th milestone: value-added information
@@ -24,9 +29,6 @@ object Manipulation {
     * @return A function that, given a latitude and a longitude, returns the average temperature at this location
     */
   def average(temperatures: Iterable[Iterable[(Location, Temperature)]]): GridLocation => Temperature = {
-
-    // TODO : Average over all years
-    // TODO : Parallelism with reduce makes sense here or maybe Spark
 
     // Generate a grid for each year
     val gridPairs: Iterable[(Grid, Int)] = for {
@@ -75,6 +77,43 @@ object Manipulation {
         grid.scale(1.0 / count)
       }
     }
+  }
+
+  /**
+    * Create a set of tiles using Spark from an RDD of grids
+    */
+  def makeTiles(gridRDD: RDD[(Int, Grid)], colorScale: List[(Double, Color)], pathPrefix: String): Unit = {
+    val tileParams = gridRDD.flatMap({
+      case (year: Int, grid: Grid) => for {
+        zoom <- 0 until 4
+        y <- 0 until pow(2.0, zoom).toInt
+        x <- 0 until pow(2.0, zoom).toInt
+      } yield (year, zoom, x, y, grid)
+    })
+
+    tileParams.foreach({
+      case (year: Int, zoom: Int, x: Int, y: Int, grid: Grid) => {
+        val tileDir = new File(s"${pathPrefix}/${year}/$zoom")
+        tileDir.mkdirs()
+        val tileFile = new File(tileDir, s"$x-$y.png")
+
+        if (tileFile.exists()) {
+          println(s"$pathPrefix: Tile for $year $zoom:$x:$y already exists")
+        }
+        else {
+          println(s"$pathPrefix: Generating tile for $year $zoom:$x:$y")
+          val tile: Image = Visualization2.visualizeGrid(
+            grid.asFunction(),
+            colorScale,
+            Tile(x, y, zoom)
+          )
+          println(s"$pathPrefix: Done tile $zoom:$x:$y for $year")
+          tile.output(tileFile)
+        }
+
+        ()
+      }
+    })
   }
 
 }
