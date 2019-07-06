@@ -18,6 +18,7 @@ object Main extends App {
 
   val firstYear = 1975
   val lastYear = 2016
+  val normalYearsBefore = 1990
 
   val colors: List[(Double, Color)] = List(
     (60.0, Color(255, 255, 255)),
@@ -88,66 +89,83 @@ object Main extends App {
 
     val sc: SparkContext = new SparkContext(conf)
 
+    // Testing params
+    val firstYear = 1986
+    val lastYear = 1994
+    val normalYearsBefore = 1990
+
     val lookupResource: DataSource.Lookup = (path: String) => {
       Source.fromFile(s"${resourceDir}/${path}")
     }
+
     val sparkExtractor = new DataExtractor(lookupResource)
 
     // Load data into RDDs
-    val years: RDD[Int] = sc.parallelize(1975 until 2016, 32)
+    val years: RDD[Int] = sc.parallelize(firstYear until lastYear, 32)
+
     val temps: RDD[(Int, Iterable[(Location, Double)])] = years.map( (year: Int) => {
       println(s"OBSERVATORY: Loading data for year ${year}")
       (year, sparkExtractor.locationYearlyAverageRecords(sparkExtractor.locateTemperatures(year, "/stations.csv", s"/${year}.csv")))
     })
+
     val grids: RDD[(Int, Grid)] = temps.map({
-      case (year: Int, temps: Iterable[(Location, Double)]) => {
+      case (year: Int, temperatures: Iterable[(Location, Double)]) => {
         println(s"OBSERVATORY: Generating grid for year ${year}")
-        (year, GridBuilder.fromIterable(temps))
+        (year, GridBuilder.fromIterable(temperatures))
       }
-    })
+    }).cache
 
     // Calculate normals from 1975-1989
-    // TODO : broadcast normalGrid
-    val normalGrid: Grid = averageGridRDD(grids.filter(_._1 < 1990).map(_._2))
+    // Broadcast result to all nodes
+    val normalGridVar = sc.broadcast(averageGridRDD(grids.filter(_._1 < normalYearsBefore).map(_._2)))
+
     // Calculate anomalies for 1990-2015
     val anomalies: RDD[(Int, Grid)] = grids.filter({
-      case (year: Int, g: Grid) => year >= 1990
+      case (year: Int, g: Grid) => year >= normalYearsBefore
     }).map({
-      case (year: Int, g: Grid) => (year, g.diff(normalGrid))
+      case (year: Int, g: Grid) => (year, g.diff(normalGridVar.value))
     })
 
-    // TODO : Create tiles
+    def makeTiles(gridRDD: RDD[(Int, Grid)], subDir: String): Unit = {
 
+      val tileParams = gridRDD.flatMap({
+        case (year: Int, grid: Grid) => for {
+          zoom <- 0 until 4
+          y <- 0 until pow(2.0, zoom).toInt
+          x <- 0 until pow(2.0, zoom).toInt
+        } yield (year, zoom, x, y, grid)
+      })
 
-    // Anomalies
-    val tileParams = anomalies.flatMap({
-      case (year: Int, grid: Grid) => for {
-        zoom <- 0 until 4
-        y <- 0 until pow(2.0, zoom).toInt
-        x <- 0 until pow(2.0, zoom).toInt
-      } yield (year, zoom, x, y, grid)
-    }).repartition(32)
+      tileParams.foreach({
+        case (year: Int, zoom: Int, x: Int, y: Int, grid: Grid) => {
+          val tileDir = new File(s"${resourceDir}/$subDir/${year}/$zoom")
+          tileDir.mkdirs()
+          val tileFile = new File(tileDir, s"$x-$y.png")
 
-    tileParams.foreach({
-      case (year: Int, zoom: Int, x: Int, y: Int, grid: Grid) => {
-        println(s"Generating image for $year $zoom:$x:$y")
-        val tile: Image = Visualization2.visualizeGrid(
-          grid.asFunction(),
-          anomalyColors,
-          Tile(x, y, zoom)
-        )
+          if (tileFile.exists()) {
+            println(s"$subDir tile for $year $zoom:$x:$y already exists")
+          }
+          else {
+            println(s"Generating $subDir tile for $year $zoom:$x:$y")
+            val tile: Image = Visualization2.visualizeGrid(
+              grid.asFunction(),
+              anomalyColors,
+              Tile(x, y, zoom)
+            )
+            println(s"Done $subDir tile $zoom:$x:$y for $year")
+            tile.output(tileFile)
+          }
 
-        val tileDir = new File(s"${resourceDir}/target/deviations/${year}/$zoom")
-        tileDir.mkdirs()
-        val tileFile = new File(tileDir, s"$x-$y.png")
+          ()
+        }
+      })
+    }
 
-        println(s"Done tile $zoom:$x:$y for $year")
-        tile.output(tileFile)
+    // Create anomaly tiles
+    makeTiles(anomalies, "deviations")
 
-        ()
-      }
-
-    })
+    // Create normal tiles
+    makeTiles(grids, "temperatures")
   }
 
   override def main(args: Array[String]): Unit = {

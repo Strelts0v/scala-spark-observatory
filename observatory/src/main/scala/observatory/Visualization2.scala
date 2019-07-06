@@ -57,24 +57,33 @@ object Visualization2 {
     val y0 = pow(2.0, 8).toInt * tile.y
     val buffer = new Array[Pixel](width * height)
 
-    for (tileY <- 0 until height) {
-      for (tileX <- 0 until width) {
-        val loc = Interaction.tileLocation(Tile(x0 + tileX, y0 + tileY, tile.zoom + 8))
-        val lonFloor = loc.lon.floor.toInt
-        val lonCeil = loc.lon.ceil.toInt
-        val latFloor = loc.lat.floor.toInt
-        val latCeil = loc.lon.ceil.toInt
+    for (y <- 0 until height) {
+      for (x <- 0 until width) {
+        val location = Interaction.tileLocation(Tile(x0 + x, y0 + y, tile.zoom + 8))
 
-        val d00 = grid(GridLocation(lonFloor, latCeil))
-        val d01 = grid(GridLocation(lonFloor, latFloor))
-        val d10 = grid(GridLocation(lonCeil, latCeil))
-        val d11 = grid(GridLocation(lonCeil, latFloor))
+        val lonFloor = location.lon.floor.toInt
+        val lonCeil = location.lon.ceil.toInt
+        val latFloor = location.lat.floor.toInt
+        val latCeil = location.lon.ceil.toInt
 
-        val xDelta = loc.lon - lonFloor
-        val yDelta = loc.lat - latFloor
+        try {
+          val d00 = grid(GridLocation(latFloor, lonFloor))
+          val d01 = grid(GridLocation(latCeil, lonFloor))
+          val d10 = grid(GridLocation(latFloor, lonCeil))
+          val d11 = grid(GridLocation(latCeil, lonCeil))
 
-        val interpolation = bilinearInterpolation(CellPoint(xDelta, yDelta), d00, d01, d10, d11)
-        buffer(tileY * width + tileX) = colorToPixel(Visualization.interpolateColor(colorMap, interpolation))
+          val xDelta = location.lon - lonFloor
+          val yDelta = location.lat - latFloor
+
+          val interpolation = bilinearInterpolation(CellPoint(xDelta, yDelta), d00, d01, d10, d11)
+          buffer(y * width + x) = colorToPixel(Visualization.interpolateColor(colorMap, interpolation))
+        } catch {
+          case e: ArrayIndexOutOfBoundsException => {
+            println(s"Index error location : $location, $x0 $x $y0 $y")
+            throw e
+          }
+        }
+
       }
     }
     Image(width, height, buffer)
