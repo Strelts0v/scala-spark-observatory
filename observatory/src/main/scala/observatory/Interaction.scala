@@ -25,8 +25,8 @@ object Interaction {
     */
   def tileLocation(tile: Tile): Location = {
     val n = pow(2.0, tile.zoom)
-    val lon = (tile.x.toDouble / n) * 360.0 - 180.0
-    val lat = atan(sinh(Pi * (1.0 - 2.0 * tile.y / n))).toDegrees
+    val lon = ((tile.x.toDouble / n) % 1.0 ) * 360.0 - 180.0
+    val lat = ((atan(sinh(Pi * (1.0 - 2.0 * tile.y / n))).toDegrees + 90) % 180.0) - 90
 
     Location(lat, lon)
   }
