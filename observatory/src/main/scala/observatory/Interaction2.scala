@@ -1,5 +1,8 @@
 package observatory
 
+import observatory.constant.ColorConstants._
+import observatory.config.DataConfig._
+
 /**
   * 6th (and last) milestone: user interface polishing
   */
@@ -8,16 +11,17 @@ object Interaction2 {
   /**
     * @return The available layers of the application
     */
-  def availableLayers: Seq[Layer] = {
-    ???
-  }
+  def availableLayers: Seq[Layer] = List(
+    Layer(LayerName.Temperatures, temperaturesColorScale, Range(firstYear, lastYear)),
+    Layer(LayerName.Deviations, anomaliesColorScale, Range(normalYearsBefore, lastYear))
+  )
 
   /**
     * @param selectedLayer A signal carrying the layer selected by the user
     * @return A signal containing the year bounds corresponding to the selected layer
     */
   def yearBounds(selectedLayer: Signal[Layer]): Signal[Range] = {
-    ???
+    Signal(selectedLayer().bounds)
   }
 
   /**
@@ -28,9 +32,12 @@ object Interaction2 {
     *         this method should return the closest value that is included
     *         in the `selectedLayer` bounds.
     */
-  def yearSelection(selectedLayer: Signal[Layer], sliderValue: Signal[Year]): Signal[Year] = {
-    ???
-  }
+  def yearSelection(selectedLayer: Signal[Layer], sliderValue: Signal[Year]): Signal[Year] = Signal({
+    val bounds = selectedLayer().bounds
+    sliderValue()
+      .max(bounds.start)
+      .min(bounds.end)
+  })
 
   /**
     * @param selectedLayer The selected layer
@@ -38,7 +45,7 @@ object Interaction2 {
     * @return The URL pattern to retrieve tiles
     */
   def layerUrlPattern(selectedLayer: Signal[Layer], selectedYear: Signal[Year]): Signal[String] = {
-    ???
+    Signal(s"./target/${selectedLayer().layerName.id}/${selectedYear()}/{z}/{x}-{y}.png")
   }
 
   /**
@@ -46,9 +53,9 @@ object Interaction2 {
     * @param selectedYear The selected year
     * @return The caption to show
     */
-  def caption(selectedLayer: Signal[Layer], selectedYear: Signal[Year]): Signal[String] = {
-    ???
-  }
+  def caption(selectedLayer: Signal[Layer], selectedYear: Signal[Year]): Signal[String] = Signal(
+    s"${selectedLayer().layerName.id} ${selectedYear()}"
+  )
 
 }
 
