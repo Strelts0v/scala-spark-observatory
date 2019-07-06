@@ -6,8 +6,13 @@ import org.apache.spark.SparkConf
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import Extraction._
-import observatory.grid.Grid
+import observatory.grid.{Grid, GridBuilder}
 import Manipulation._
+import com.sksamuel.scrimage.Image
+import observatory.resource.{DataExtractor, DataSource}
+
+import scala.io.Source
+import scala.math.pow
 
 object Main extends App {
 
@@ -74,10 +79,7 @@ object Main extends App {
     Interaction.generateTiles(List((1975, temps)), generateTile)
   }
 
-
-  // Note: The climatalogical term for what the course descrives as temperature deviations is "anomalies"
-  def doWeek5(): Unit = {
-
+  def doWeek5(resourceDir: String): Unit = {
     // Setup Spark environment
     val conf: SparkConf = new SparkConf()
       .setAppName("Observatory")
@@ -86,23 +88,75 @@ object Main extends App {
 
     val sc: SparkContext = new SparkContext(conf)
 
+    val lookupResource: DataSource.Lookup = (path: String) => {
+      Source.fromFile(s"${resourceDir}/${path}")
+    }
+    val sparkExtractor = new DataExtractor(lookupResource)
+
     // Load data into RDDs
-    val years: RDD[Int] = sc.parallelize(1975 until 2016)
+    val years: RDD[Int] = sc.parallelize(1975 until 2016, 32)
     val temps: RDD[(Int, Iterable[(Location, Double)])] = years.map( (year: Int) => {
-      (year, locationYearlyAverageRecords(locateTemperatures(year, "/stations.csv", s"/${year}.csv")))
+      println(s"OBSERVATORY: Loading data for year ${year}")
+      (year, sparkExtractor.locationYearlyAverageRecords(sparkExtractor.locateTemperatures(year, "/stations.csv", s"/${year}.csv")))
     })
     val grids: RDD[(Int, Grid)] = temps.map({
-      case (year: Int, temps: Iterable[(Location, Double)]) => (year, new Grid(360, 180, temps))
+      case (year: Int, temps: Iterable[(Location, Double)]) => {
+        println(s"OBSERVATORY: Generating grid for year ${year}")
+        (year, GridBuilder.fromIterable(temps))
+      }
     })
 
     // Calculate normals from 1975-1989
+    // TODO : broadcast normalGrid
     val normalGrid: Grid = averageGridRDD(grids.filter(_._1 < 1990).map(_._2))
-    // TODO : Calculate anomalies for 1990-2015
+    // Calculate anomalies for 1990-2015
+    val anomalies: RDD[(Int, Grid)] = grids.filter({
+      case (year: Int, g: Grid) => year >= 1990
+    }).map({
+      case (year: Int, g: Grid) => (year, g.diff(normalGrid))
+    })
 
     // TODO : Create tiles
+
+
+    // Anomalies
+    val tileParams = anomalies.flatMap({
+      case (year: Int, grid: Grid) => for {
+        zoom <- 0 until 4
+        y <- 0 until pow(2.0, zoom).toInt
+        x <- 0 until pow(2.0, zoom).toInt
+      } yield (year, zoom, x, y, grid)
+    }).repartition(32)
+
+    tileParams.foreach({
+      case (year: Int, zoom: Int, x: Int, y: Int, grid: Grid) => {
+        println(s"Generating image for $year $zoom:$x:$y")
+        val tile: Image = Visualization2.visualizeGrid(
+          grid.asFunction(),
+          anomalyColors,
+          Tile(x, y, zoom)
+        )
+
+        val tileDir = new File(s"${resourceDir}/target/deviations/${year}/$zoom")
+        tileDir.mkdirs()
+        val tileFile = new File(tileDir, s"$x-$y.png")
+
+        println(s"Done tile $zoom:$x:$y for $year")
+        tile.output(tileFile)
+
+        ()
+      }
+
+    })
   }
 
-  doWeek5()
+  override def main(args: Array[String]): Unit = {
 
+    // First argument is the resources directory
+    val resourceDir = args(0)
+
+    doWeek5(resourceDir)
+
+  }
 }
 
