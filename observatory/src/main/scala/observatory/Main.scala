@@ -10,35 +10,13 @@ import observatory.grid.{Grid, GridBuilder}
 import Manipulation._
 import com.sksamuel.scrimage.Image
 import observatory.resource.{DataExtractor, DataSource}
+import observatory.constant.ColorConstants._
+import observatory.config.DataConfig._
 
 import scala.io.Source
 import scala.math.pow
 
 object Main extends App {
-
-  val firstYear = 1975
-  val lastYear = 2016
-  val normalYearsBefore = 1990
-
-  val colors: List[(Double, Color)] = List(
-    (60.0, Color(255, 255, 255)),
-    (32.0, Color(255, 0, 0)),
-    (12.0, Color(255, 255, 0)),
-    (0.0, Color(0, 255, 255)),
-    (-15.0, Color(0, 0, 255)),
-    (-27.0, Color(255, 0, 255)),
-    (-50.0, Color(33, 0, 107)),
-    (-60.0, Color(0, 0, 0))
-  )
-
-  val anomalyColors: List[(Double, Color)] = List(
-    (7.0, Color(0, 0, 0)),
-    (4.0, Color(255, 0, 0)),
-    (2.0, Color(255, 255, 0)),
-    (0.0, Color(255, 255, 255)),
-    (-2.0, Color(0, 255, 255)),
-    (-7.0, Color(0, 0, 255))
-  )
 
   def doWeek1(): Unit = {
     val temperatures: Map[Int, Iterable[(Location, Double)]] = {
@@ -50,7 +28,7 @@ object Main extends App {
 
   def doWeek2(): Unit = {
     val temperatures = locationYearlyAverageRecords(locateTemperatures(1975, "/stations.csv", "/1975.csv"))
-    val image = Visualization.visualize(temperatures, colors)
+    val image = Visualization.visualize(temperatures, temperaturesColorScale)
     image.output("./map_1975.png")
 
     ()
@@ -69,7 +47,7 @@ object Main extends App {
       }
       else {
         println(s"Generating tile ${tile.zoom}:${tile.x}:${tile.y} for $year")
-        val image = Interaction.tile(data, colors, Tile(tile.x, tile.y, tile.zoom))
+        val image = Interaction.tile(data, temperaturesColorScale, Tile(tile.x, tile.y, tile.zoom))
         println(s"Done tile ${tile.zoom}:${tile.x}:${tile.y} for $year")
         image.output(tileFile)
       }
@@ -88,11 +66,6 @@ object Main extends App {
       .set("spark.executor.memory", "3g")
 
     val sc: SparkContext = new SparkContext(conf)
-
-    // Testing params
-    val firstYear = 1986
-    val lastYear = 1994
-    val normalYearsBefore = 1990
 
     val lookupResource: DataSource.Lookup = (path: String) => {
       Source.fromFile(s"${resourceDir}/${path}")
@@ -126,7 +99,7 @@ object Main extends App {
       case (year: Int, g: Grid) => (year, g.diff(normalGridVar.value))
     })
 
-    def makeTiles(gridRDD: RDD[(Int, Grid)], subDir: String): Unit = {
+    def makeTiles(gridRDD: RDD[(Int, Grid)], subDir: String, colorScale: List[(Double, Color)]): Unit = {
 
       val tileParams = gridRDD.flatMap({
         case (year: Int, grid: Grid) => for {
@@ -149,7 +122,7 @@ object Main extends App {
             println(s"Generating $subDir tile for $year $zoom:$x:$y")
             val tile: Image = Visualization2.visualizeGrid(
               grid.asFunction(),
-              anomalyColors,
+              colorScale,
               Tile(x, y, zoom)
             )
             println(s"Done $subDir tile $zoom:$x:$y for $year")
@@ -162,10 +135,10 @@ object Main extends App {
     }
 
     // Create anomaly tiles
-    makeTiles(anomalies, "deviations")
+    makeTiles(anomalies, "deviations", temperaturesColorScale)
 
     // Create normal tiles
-    makeTiles(grids, "temperatures")
+    makeTiles(grids, "temperatures", anomaliesColorScale)
   }
 
   override def main(args: Array[String]): Unit = {
