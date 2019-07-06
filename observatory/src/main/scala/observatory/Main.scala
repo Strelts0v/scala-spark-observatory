@@ -8,13 +8,11 @@ import org.apache.spark.rdd.RDD
 import Extraction._
 import observatory.grid.{Grid, GridBuilder}
 import Manipulation._
-import com.sksamuel.scrimage.Image
 import observatory.resource.{DataExtractor, DataSource}
 import observatory.constant.ColorConstants._
 import observatory.config.DataConfig._
 
 import scala.io.Source
-import scala.math.pow
 
 object Main extends App {
 
@@ -76,17 +74,17 @@ object Main extends App {
     // Load data into RDDs
     val years: RDD[Int] = sc.parallelize(firstYear until lastYear, 32)
 
-    val temps: RDD[(Int, Iterable[(Location, Double)])] = years.map( (year: Int) => {
+    val temperatures: RDD[(Int, Iterable[(Location, Double)])] = years.map((year: Int) => {
       println(s"OBSERVATORY: Loading data for year ${year}")
       (year, sparkExtractor.locationYearlyAverageRecords(sparkExtractor.locateTemperatures(year, "/stations.csv", s"/${year}.csv")))
     })
 
-    val grids: RDD[(Int, Grid)] = temps.map({
+    val grids: RDD[(Int, Grid)] = temperatures.map({
       case (year: Int, temperatures: Iterable[(Location, Double)]) => {
         println(s"OBSERVATORY: Generating grid for year ${year}")
         (year, GridBuilder.fromIterable(temperatures))
       }
-    }).cache
+    }).cache  // caching result grids in memory
 
     // Calculate normals from 1975-1989
     // Broadcast result to all nodes
@@ -99,46 +97,11 @@ object Main extends App {
       case (year: Int, g: Grid) => (year, g.diff(normalGridVar.value))
     })
 
-    def makeTiles(gridRDD: RDD[(Int, Grid)], subDir: String, colorScale: List[(Double, Color)]): Unit = {
-
-      val tileParams = gridRDD.flatMap({
-        case (year: Int, grid: Grid) => for {
-          zoom <- 0 until 4
-          y <- 0 until pow(2.0, zoom).toInt
-          x <- 0 until pow(2.0, zoom).toInt
-        } yield (year, zoom, x, y, grid)
-      })
-
-      tileParams.foreach({
-        case (year: Int, zoom: Int, x: Int, y: Int, grid: Grid) => {
-          val tileDir = new File(s"${resourceDir}/$subDir/${year}/$zoom")
-          tileDir.mkdirs()
-          val tileFile = new File(tileDir, s"$x-$y.png")
-
-          if (tileFile.exists()) {
-            println(s"$subDir tile for $year $zoom:$x:$y already exists")
-          }
-          else {
-            println(s"Generating $subDir tile for $year $zoom:$x:$y")
-            val tile: Image = Visualization2.visualizeGrid(
-              grid.asFunction(),
-              colorScale,
-              Tile(x, y, zoom)
-            )
-            println(s"Done $subDir tile $zoom:$x:$y for $year")
-            tile.output(tileFile)
-          }
-
-          ()
-        }
-      })
-    }
-
     // Create anomaly tiles
-    makeTiles(anomalies, "deviations", temperaturesColorScale)
+    makeTiles(anomalies, anomaliesColorScale, s"${resourceDir}/deviations")
 
     // Create normal tiles
-    makeTiles(grids, "temperatures", anomaliesColorScale)
+    makeTiles(grids, temperaturesColorScale, s"${resourceDir}/temperatures")
   }
 
   override def main(args: Array[String]): Unit = {
