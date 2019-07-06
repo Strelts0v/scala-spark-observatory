@@ -1,6 +1,6 @@
 package observatory
 
-import observatory.grid.Grid
+import observatory.grid.{Grid, GridBuilder}
 import org.apache.spark.rdd.RDD
 
 /**
@@ -14,7 +14,7 @@ object Manipulation {
     *         returns the predicted temperature at this location
     */
   def makeGrid(temperatures: Iterable[(Location, Temperature)]): GridLocation => Temperature = {
-    val grid = new Grid(360, 180, temperatures)
+    val grid: Grid = GridBuilder.fromIterable(temperatures)
     grid.asFunction()
   }
 
@@ -31,12 +31,12 @@ object Manipulation {
     // Generate a grid for each year
     val gridPairs: Iterable[(Grid, Int)] = for {
       temps <- temperatures
-    } yield (new Grid(360, 180, temps), 1)
+    } yield (GridBuilder.fromIterable(temps), 1)
 
     val reduced = gridPairs.reduce(mergeArrayPairs)
 
     val meanGrid: Grid = reduced match {
-      case (grid, count) => new Grid(360, 180, grid.asArray().map(_ / count))
+      case (grid, count) => grid.map(_ / count)
     }
 
     meanGrid.asFunction()
@@ -57,13 +57,7 @@ object Manipulation {
   def mergeArrayPairs(p1: (Grid, Int), p2: (Grid, Int)): (Grid, Int) = {
     (p1, p2) match {
       case ((g1, c1), (g2, c2)) => {
-        val a1 = g1.asArray()
-        val a2 = g2.asArray()
-        val a3 = new Array[Double](a1.length)
-        for (i <- 0 until a1.length) {
-          a3(i) = a1(i) + a2(i)
-        }
-        (new Grid(360, 180, a3), c1 + c2)
+        (g1.add(g2), c1 + c2)
       }
     }
   }
@@ -76,11 +70,11 @@ object Manipulation {
       (p1: (Grid, Int), p2: (Grid, Int)) => mergeArrayPairs(p1, p2)
     )
 
-    val meanArray: Array[Double] = reduced match {
-      case (grid, count) => grid.asArray().map(_ / count)
+    reduced match {
+      case (grid, count) => {
+        grid.scale(1.0 / count)
+      }
     }
-
-    new Grid(360, 180, meanArray)
   }
 
 }
