@@ -60,8 +60,8 @@ object Main extends App {
     // Setup Spark environment
     val conf: SparkConf = new SparkConf()
       .setAppName("Observatory")
-      .setMaster("local[3]")
-      .set("spark.executor.memory", "3g")
+      .setMaster("local[6]")
+      .set("spark.executor.memory", "4g")
 
     val sc: SparkContext = new SparkContext(conf)
 
@@ -107,7 +107,8 @@ object Main extends App {
   override def main(args: Array[String]): Unit = {
 
     // First argument is the resources directory
-    val resourceDir = args(0)
+    // val resourceDir = args(0)
+    val resourceDir = "D:\\projects\\scala-courses\\observatory-example\\scala-capstone\\observatory\\src\\main\\resources"
 
     doWeek5(resourceDir)
 
