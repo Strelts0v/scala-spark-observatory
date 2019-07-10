@@ -43,7 +43,7 @@ class InterpolationCalculationsTest extends FunSuite with Checkers {
       )
     val loc = Location(0, 0)
 
-    assert(InterpolationCalculations.inverseDistanceWeighting(sample, loc, inverseDistanceWeightingPower) === 5.0)
+    assert(InterpolationCalculations.inverseDistanceWeighting(sample, loc, interpolationPower) === 5.0)
   }
 
   test("Check work of inverseDistanceWeighting algorithm with particular points") {
@@ -56,12 +56,12 @@ class InterpolationCalculationsTest extends FunSuite with Checkers {
       )
     val loc = Location(-30, 0)
 
-    assert(InterpolationCalculations.inverseDistanceWeighting(sample, loc, inverseDistanceWeightingPower) === 15.0)
+    assert(InterpolationCalculations.inverseDistanceWeighting(sample, loc, interpolationPower) === 15.0)
   }
 
   test("Check work of inverseDistanceWeighting algorithm with random samples") {
     check(forAll (sampleGen, locationGen) { (sample: List[(Location, Double)], loc: Location) => {
-      val result = InterpolationCalculations.inverseDistanceWeighting(sample, loc, inverseDistanceWeightingPower)
+      val result = InterpolationCalculations.inverseDistanceWeighting(sample, loc, interpolationPower)
       (result <= 50.0) && (result >= -50.0)
     }})
   }

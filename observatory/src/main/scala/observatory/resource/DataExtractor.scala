@@ -61,9 +61,9 @@ class DataExtractor(dataSource: DataSource.Lookup) extends Serializable {
   /**
     * Any Non-numeric input results in the key's component  being None
     *
-    * @param stnStr   STN number as string or the empty string
-    * @param wbanStr  WBAN number as string or the empty string
-    * @return         StationKey
+    * @param stnStr STN number as string or the empty string
+    * @param wbanStr WBAN number as string or the empty string
+    * @return StationKey
     */
   def parseStationId(stnStr: String, wbanStr: String) =
     StationId(Try(stnStr.toInt).toOption,
@@ -72,40 +72,55 @@ class DataExtractor(dataSource: DataSource.Lookup) extends Serializable {
   /**
     * Parse a line from the stations file
     *
-    * @param str      String of STN,WBAN,LAT,LON
-    * @return         Parsed line
+    * @param str String of STN,WBAN,LAT,LON
+    * @return Parsed line
     */
   def parseStationsLine(str: String): Option[(StationId, Location)] = {
     str.split(",") match {
-      case Array(stn, wban, lat, lon) => Some((parseStationId(stn, wban), Location(lat.toDouble, lon.toDouble)))
+      case Array(stn, wban, lat, lon) => Some(
+        (parseStationId(stn, wban), Location(lat.toDouble, lon.toDouble))
+      )
       case _ => None
     }
   }
 
   /**
     * Parse a line from a temperatures file
-    * @param str      String of STN,WBAN,MONTH,DAY,TEMP
-    * @return         Parsed line
+    *
+    * @param str String of STN,WBAN,MONTH,DAY,TEMP
+    * @return Parsed line
     */
-  def parseTempsLine(str: String): Option[StationTemperature] = {
-    val tryRecord = str.split(",") match {
+  def parseTemperaturesLine(str: String): Option[StationTemperature] = {
+    val record = str.split(",") match {
       case Array(stn, wban, month, day, temp) => {
         val stationId = parseStationId(stn, wban)
         Try(StationTemperature(stationId, month.toInt, day.toInt, temp.toDouble))
       }
       case _ => Failure(new RuntimeException("Parse failed"))
     }
-    tryRecord.toOption
+    record.toOption
   }
 
+  /**
+    * Parse a whole stations file
+    *
+    * @param stationsFile path to a stations file
+    * @return Map of parsed stations
+    */
   def parseStationsFile(stationsFile: String): Map[StationId, Location] = {
     val lineStream = dataSource(stationsFile).getLines
     lineStream.flatMap(parseStationsLine).toMap
   }
 
+  /**
+    * Parse a whole temperatures file
+    *
+    * @param temperaturesFile path to a temperatures file
+    * @return Iterable of parsed station temperatures
+    */
   def parseTemperaturesFile(temperaturesFile: String) : Iterable[StationTemperature] = {
     val lineStream = dataSource(temperaturesFile).getLines
-    lineStream.flatMap(parseTempsLine).toIterable
+    lineStream.flatMap(parseTemperaturesLine).toIterable
   }
 
 }

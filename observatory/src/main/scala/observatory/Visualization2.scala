@@ -10,6 +10,10 @@ import scala.math.pow
 object Visualization2 {
 
   /**
+    * This method takes the coordinates (x and y values between 0 and 1) of the location
+    * to estimate the temperature at, and the 4 known temperatures,
+    * and returns the estimated temperature at location (x, y).
+    *
     * @param point (x, y) coordinates of a point in the grid cell
     * @param d00 Top-left value
     * @param d01 Bottom-left value
@@ -33,6 +37,10 @@ object Visualization2 {
   }
 
   /**
+    * This method takes a grid, a color scale and the coordinates of a tile, and returns
+    * the 256×256 image of this tile, where each pixel has a color computed according
+    * to the given color scale applied to the grid values.
+    *
     * @param grid Grid to visualize
     * @param colors Color scale to use
     * @param tile Tile coordinates to visualize

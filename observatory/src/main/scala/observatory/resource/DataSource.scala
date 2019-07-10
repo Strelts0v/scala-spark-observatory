@@ -2,6 +2,9 @@ package observatory.resource
 
 import scala.io.Source
 
+/**
+  * Object for resource extraction
+  */
 object DataSource {
 
   type Lookup = String => Source
