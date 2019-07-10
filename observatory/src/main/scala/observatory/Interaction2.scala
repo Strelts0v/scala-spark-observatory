@@ -2,13 +2,15 @@ package observatory
 
 import observatory.constant.ColorConstants._
 import observatory.config.DataConfig._
-
 /**
-  * 6th (and last) milestone: user interface polishing
+  * Object for basic visualisation with layers and final user interface polishing
   */
 object Interaction2 {
 
   /**
+    * This method returns the layers you want the user to be able to visualize.
+    * Each layer has a name, a color scale and a range of supported years.
+    *
     * @return The available layers of the application
     */
   def availableLayers: Seq[Layer] = List(
@@ -17,6 +19,9 @@ object Interaction2 {
   )
 
   /**
+    * This method takes the selected layer signal and
+    * returns the years range supported by this layer.
+    *
     * @param selectedLayer A signal carrying the layer selected by the user
     * @return A signal containing the year bounds corresponding to the selected layer
     */
@@ -25,6 +30,9 @@ object Interaction2 {
   }
 
   /**
+    * This method takes the selected layer and the year slider value and returns
+    * the actual selected year, so that this year is not out of the layer bounds.
+    *
     * @param selectedLayer The selected layer
     * @param sliderValue The value of the year slider
     * @return The value of the selected year, so that it never goes out of the layer bounds.
@@ -40,6 +48,9 @@ object Interaction2 {
   })
 
   /**
+    * This method takes the selected layer and the selected year and returns
+    * the pattern of the URL to use to retrieve the tiles.
+    *
     * @param selectedLayer The selected layer
     * @param selectedYear The selected year
     * @return The URL pattern to retrieve tiles

@@ -1,10 +1,13 @@
 package observatory.visualization
 
-import observatory.Interaction.tileLocation
-import observatory.{Color, Location, Tile}
+import observatory.{Color, Interaction, Location, Tile}
 
 import scala.math.pow
 
+/**
+  * Implementation of Visualizer contract for map tile
+  * @param colors Sequence of colors user for visualization
+  */
 class TileVisualizer(colors: Iterable[(Double, Color)], tile: Tile) extends Visualizer {
   val alpha = 127
   val width = 256
@@ -16,6 +19,6 @@ class TileVisualizer(colors: Iterable[(Double, Color)], tile: Tile) extends Visu
   val y0: Int = pow(2.0, 8).toInt * tile.y
 
   def xyToLocation(x: Int, y: Int): Location = {
-    tileLocation(Tile(x0 + x, y0 + y, tile.zoom + 8))
+    Interaction.tileLocation(Tile(x0 + x, y0 + y, tile.zoom + 8))
   }
 }

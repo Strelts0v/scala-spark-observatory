@@ -2,7 +2,11 @@ package observatory.visualization
 
 import observatory.{Color, Location}
 
-class BasicVisualizer(colors: Iterable[(Double, Color)]) extends Visualizer {
+/**
+  * Implementation of Visualizer contract for global map
+  * @param colors Sequence of colors user for visualization
+  */
+class MapVisualizer(colors: Iterable[(Double, Color)]) extends Visualizer {
   val alpha = 255
   val width = 360
   val height = 180

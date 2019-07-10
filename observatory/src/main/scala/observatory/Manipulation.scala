@@ -9,7 +9,7 @@ import org.apache.spark.rdd.RDD
 import scala.math.pow
 
 /**
-  * 4th milestone: value-added information
+  * object for computation of temperature evolution
   */
 object Manipulation {
 
@@ -24,6 +24,10 @@ object Manipulation {
   }
 
   /**
+    * This method takes a sequence of temperature data over several years (each “temperature data”
+    * for one year being a sequence of pairs of average yearly temperature and location),
+    * and returns a grid containing the average temperature over the given years at each location.
+    *
     * @param temperatures Sequence of known temperatures over the years (each element of the collection
     *                      is a collection of pairs of location and temperature)
     * @return A function that, given a latitude and a longitude, returns the average temperature at this location
@@ -45,6 +49,9 @@ object Manipulation {
   }
 
   /**
+    * This method takes temperature data and a grid containing normal temperatures,
+    * and returns a grid containing temperature deviations from the normals.
+    *
     * @param temperatures Known temperatures
     * @param normals A grid containing the “normal” temperatures
     * @return A grid containing the deviations compared to the normal temperatures
@@ -67,7 +74,7 @@ object Manipulation {
   /**
     * Spark implementation of the averaging function
     */
-  def averageGridRDD(temperatures: RDD[Grid]): Grid = {
+  def averageGridRdd(temperatures: RDD[Grid]): Grid = {
     val reduced: (Grid, Int) = temperatures.map((_, 1)).reduce(
       (p1: (Grid, Int), p2: (Grid, Int)) => mergeArrayPairs(p1, p2)
     )
